@@ -1,0 +1,37 @@
+# Ignore all files in AVO_MASTER but keep the folder
+update_shopee/INPUT/AVO_MASTER/*
+!update_shopee/INPUT/AVO_MASTER/.gitkeep
+
+update_shopee/INPUT/AVO_PROMO/*
+!update_shopee/INPUT/AVO_PROMO/.gitkeep
+
+update_shopee/INPUT/SHOPEE_INFORMASI DIKIRIM DALAM/*
+!update_shopee/INPUT/SHOPEE_INFORMASI DIKIRIM DALAM/.gitkeep
+
+update_shopee/INPUT/SHOPEE_INFORMASI PENJUALAN/*
+!update_shopee/INPUT/SHOPEE_INFORMASI PENJUALAN/.gitkeep
+
+update_shopee/LOGS/*
+!update_shopee/LOGS/.gitkeep
+
+update_shopee/OUTPUT/*
+!update_shopee/OUTPUT/.gitkeep
+
+# Ignore all files in Tokopedia but keep the folder
+update_tokopedia/INPUT/AVO_MASTER/*
+!update_tokopedia/INPUT/AVO_MASTER/.gitkeep
+
+update_tokopedia/INPUT/AVO_PROMO/*
+!update_tokopedia/INPUT/AVO_PROMO/.gitkeep
+
+update_tokopedia/INPUT/TOKOPEDIA_PROMO/*
+!update_tokopedia/INPUT/TOKOPEDIA_PROMO/.gitkeep
+
+update_tokopedia/INPUT/TOKOPEDIA_STOK/*
+!update_tokopedia/INPUT/TOKOPEDIA_STOK/.gitkeep
+
+update_tokopedia/LOGS/*
+!update_tokopedia/LOGS/.gitkeep
+
+update_tokopedia/OUTPUT/*
+!update_tokopedia/OUTPUT/.gitkeep
