@@ -45,8 +45,8 @@ INPUT_AVO_PROMO_PATH = "INPUT/AVO_PROMO"
 INPUT_AVO_MASTER_PATH = "INPUT/AVO_MASTER"
 
 SETTINGS_FEE_PATH = "SETTINGS/fee.xlsx"
+SETTINGS_CONSTANT_PATH = "SETTINGS/constant.xlsx"
 
-HIGHEST_FEE = 0.08
 STOCK_DIVISOR = 3
 MAX_ENTRIES = 499
 
@@ -62,6 +62,17 @@ INPUT_DELETION = False
 SHEET_NAME = 'Ubah-Stok Lokasi Harga-Shop Adm'
 TEMPLATE_SUBJECT = "EDT_PRICE_SHOP_ADMIN_HASH_7E998F126A0CD785FA34_FLT_ALL_T_9B774CD2BE82D1E3ACC1_2"
 
+
+#===================================================================================================================================================
+# CONSTANT READING
+#===================================================================================================================================================
+
+# read constants file
+constants_df = pd.read_excel(SETTINGS_CONSTANT_PATH, header=None, engine='openpyxl')
+
+# Assign variables directly
+STOCK_DIVISOR = constants_df.loc[constants_df[0] == "STOCK_DIVISOR", 1].values[0]
+FREE_ONGKIR_FEE = constants_df.loc[constants_df[0] == "FREE_ONGKIR_FEE", 1].values[0]
 
 #===================================================================================================================================================
 # HELPER FUNCTIONS
@@ -235,6 +246,7 @@ toped_stok_df = toped_stok_df.merge(toped_promo_df[["Product ID", "SKU"]], on="P
 # Settings Data Processing
 # read the settings fee
 settings_fee_df = pd.read_excel(SETTINGS_FEE_PATH, header=0, engine='openpyxl', dtype={"SKU": str, "fee": float})
+HIGHEST_FEE = settings_fee_df["fee"].max()
 
 # Remove duplicates from settings
 settings_fee_df.drop_duplicates(subset="SKU", keep='first', inplace=True)
@@ -369,8 +381,10 @@ for index, row in toped_stok_df.iterrows():
         row["fee"] = HIGHEST_FEE
         # dont skip this row, its okay with wrong fee as long as we put it as highest fee
         
+    fee = row["fee"] + FREE_ONGKIR_FEE
+        
     # If price is different, format change
-    price_now = float(math.ceil(avo_price / (1 - row["fee"])))
+    price_now = float(math.ceil(avo_price / (1 - fee)))
     if toped_price != price_now:
         price_change = f"{toped_price} -> {price_now}" # record price change
         updated_toped_stok_df.at[index, "Price"] = price_now # update price

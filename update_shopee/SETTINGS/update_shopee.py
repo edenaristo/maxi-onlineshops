@@ -37,6 +37,7 @@ import re
 #===================================================================================================================================================
 SETTINGS_FEE_PATH = 'SETTINGS/fee.xlsx'
 SETTINGS_CATEGORY_PATH = 'SETTINGS/kode kategori.xlsx'
+SETTINGS_CONSTANT_PATH = "SETTINGS/constant.xlsx"
 
 INPUT_AVO_MASTER_PATH = 'INPUT/AVO_MASTER'
 INPUT_AVO_PROMO_PATH = 'INPUT/AVO_PROMO'
@@ -55,6 +56,16 @@ HIGHEST_FEE = 0.08
 INPUT_DELETION = False # Set to True to delete input files after processing
 OUTPUT_DELETION = True # Set to True to delete output files before outputting
 
+#===================================================================================================================================================
+# CONSTANT READING
+#===================================================================================================================================================
+
+# read constants file
+constants_df = pd.read_excel(SETTINGS_CONSTANT_PATH, header=None, engine='openpyxl')
+
+# Assign variables directly
+STOCK_DIVISOR = constants_df.loc[constants_df[0] == "STOCK_DIVISOR", 1].values[0]
+FREE_ONGKIR_FEE = constants_df.loc[constants_df[0] == "FREE_ONGKIR_FEE", 1].values[0]
 
 #===================================================================================================================================================
 # HELPER FUNCTIONS
@@ -168,6 +179,7 @@ shopee_df.rename(columns={"category_id": "category"}, inplace=True)
 # Load settings data
 settings_category_df = pd.read_excel(SETTINGS_CATEGORY_PATH, header=0, engine='openpyxl', dtype={"kategori id": str, "fee kategori": str})
 settings_fee_df = pd.read_excel(SETTINGS_FEE_PATH, header=0, engine='openpyxl', dtype={"kategori": str, "fee": float})
+HIGHEST_FEE = settings_fee_df["fee"].max()
 
 # Delete duplicate from fee
 settings_category_df.drop_duplicates(subset="kategori id", keep='first', inplace=True)
@@ -340,9 +352,11 @@ for index, row in shopee_df.iterrows():
         bad_category_df = pd.concat([bad_category_df, row.to_frame().T], ignore_index=True)  # Append entire row
         row["fee"] = HIGHEST_FEE
         # dont skip this row
+        
+    fee = row["fee"] + FREE_ONGKIR_FEE
     
     # If price is different, format change
-    price_now = float(math.ceil(avo_price / (1 - row["fee"])))
+    price_now = float(math.ceil(avo_price / (1 - fee)))
     if shopee_price != price_now:
         price_change = f"{shopee_price} -> {price_now}"
         updated_shopee_df.at[index, "Price"] = price_now  # update price
