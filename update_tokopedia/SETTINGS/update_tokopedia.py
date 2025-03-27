@@ -47,7 +47,6 @@ INPUT_AVO_MASTER_PATH = "INPUT/AVO_MASTER"
 SETTINGS_FEE_PATH = "SETTINGS/fee.xlsx"
 SETTINGS_CONSTANT_PATH = "SETTINGS/constant.xlsx"
 
-STOCK_DIVISOR = 3
 MAX_ENTRIES = 499
 
 LOG_OUTPUT_FILE_NAME = 'tokopedia_logfile'
@@ -64,6 +63,26 @@ TEMPLATE_SUBJECT = "EDT_PRICE_SHOP_ADMIN_HASH_7E998F126A0CD785FA34_FLT_ALL_T_9B7
 
 
 #===================================================================================================================================================
+# HELPER FUNCTIONS
+#===================================================================================================================================================
+def format_table(df, table_name):
+    return f"\n{table_name}\n" + ("-" * len(table_name)) + "\n" + (tabulate(df, headers="keys", tablefmt="grid")) + "\n"
+
+
+#===================================================================================================================================================
+# PATH PROCESSING
+#===================================================================================================================================================
+# Get the directory where the EXE (or script) is running
+if getattr(sys, 'frozen', False):  
+    BASE_DIR = os.path.dirname(sys.executable)  # Running as an .exe
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Running as a .py script
+
+# Use relative paths instead of absolute ones
+file_path = os.path.join(BASE_DIR, "config.json")
+
+
+#===================================================================================================================================================
 # CONSTANT READING
 #===================================================================================================================================================
 
@@ -73,12 +92,7 @@ constants_df = pd.read_excel(SETTINGS_CONSTANT_PATH, header=None, engine='openpy
 # Assign variables directly
 STOCK_DIVISOR = constants_df.loc[constants_df[0] == "STOCK_DIVISOR", 1].values[0]
 FREE_ONGKIR_FEE = constants_df.loc[constants_df[0] == "FREE_ONGKIR_FEE", 1].values[0]
-
-#===================================================================================================================================================
-# HELPER FUNCTIONS
-#===================================================================================================================================================
-def format_table(df, table_name):
-    return f"\n{table_name}\n" + ("-" * len(table_name)) + "\n" + (tabulate(df, headers="keys", tablefmt="grid")) + "\n"
+MARKUP = constants_df.loc[constants_df[0] == "MARKUP", 1].values[0]
 
 #===================================================================================================================================================
 # AVO MASTER DATA INPUTTING
@@ -384,7 +398,7 @@ for index, row in toped_stok_df.iterrows():
     fee = row["fee"] + FREE_ONGKIR_FEE
         
     # If price is different, format change
-    price_now = float(math.ceil(avo_price / (1 - fee)))
+    price_now = float(math.ceil((avo_price * (1 + MARKUP))/ (1 - fee)))
     if toped_price != price_now:
         price_change = f"{toped_price} -> {price_now}" # record price change
         updated_toped_stok_df.at[index, "Price"] = price_now # update price

@@ -50,22 +50,9 @@ SHOPEE_OUTPUT_FILE_NAME = 'shopee_output'
 LOG_PATH = "LOGS"
 LOG_OUTPUT_FILE_NAME = 'shopee_logfile'
 
-STOCK_DIVISOR = 3
-HIGHEST_FEE = 0.08
-
 INPUT_DELETION = False # Set to True to delete input files after processing
 OUTPUT_DELETION = True # Set to True to delete output files before outputting
 
-#===================================================================================================================================================
-# CONSTANT READING
-#===================================================================================================================================================
-
-# read constants file
-constants_df = pd.read_excel(SETTINGS_CONSTANT_PATH, header=None, engine='openpyxl')
-
-# Assign variables directly
-STOCK_DIVISOR = constants_df.loc[constants_df[0] == "STOCK_DIVISOR", 1].values[0]
-FREE_ONGKIR_FEE = constants_df.loc[constants_df[0] == "FREE_ONGKIR_FEE", 1].values[0]
 
 #===================================================================================================================================================
 # HELPER FUNCTIONS
@@ -85,6 +72,18 @@ else:
 
 # Use relative paths instead of absolute ones
 file_path = os.path.join(BASE_DIR, "config.json")
+
+#===================================================================================================================================================
+# CONSTANT READING
+#===================================================================================================================================================
+
+# read constants file
+constants_df = pd.read_excel(SETTINGS_CONSTANT_PATH, header=None, engine='openpyxl')
+
+# Assign variables directly
+STOCK_DIVISOR = constants_df.loc[constants_df[0] == "STOCK_DIVISOR", 1].values[0]
+FREE_ONGKIR_FEE = constants_df.loc[constants_df[0] == "FREE_ONGKIR_FEE", 1].values[0]
+MARKUP = constants_df.loc[constants_df[0] == "MARKUP", 1].values[0]
 
 
 #===================================================================================================================================================
@@ -356,7 +355,7 @@ for index, row in shopee_df.iterrows():
     fee = row["fee"] + FREE_ONGKIR_FEE
     
     # If price is different, format change
-    price_now = float(math.ceil(avo_price / (1 - fee)))
+    price_now = float(math.ceil((avo_price * (1 + MARKUP)) / (1 - fee)))
     if shopee_price != price_now:
         price_change = f"{shopee_price} -> {price_now}"
         updated_shopee_df.at[index, "Price"] = price_now  # update price

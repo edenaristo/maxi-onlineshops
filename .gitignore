@@ -17,6 +17,11 @@ update_shopee/LOGS/*
 update_shopee/OUTPUT/*
 !update_shopee/OUTPUT/.gitkeep
 
+update_shopee/SETTINGS/*
+!update_shopee/SETTINGS/.gitkeep
+
+update_shopee/update_shopee.exe
+
 # Ignore all files in Tokopedia but keep the folder
 update_tokopedia/INPUT/AVO_MASTER/*
 !update_tokopedia/INPUT/AVO_MASTER/.gitkeep
@@ -35,3 +40,8 @@ update_tokopedia/LOGS/*
 
 update_tokopedia/OUTPUT/*
 !update_tokopedia/OUTPUT/.gitkeep
+
+update_tokopedia/SETTINGS/*
+!update_tokopedia/SETTINGS/.gitkeep
+
+update_tokopedia/update_tokopedia.exe
