@@ -15,7 +15,7 @@
 ###  This code is owned by CV. MAXI RAYA
 ###  Made by Eden Aristo Tingkir
 ###  For fixes, contact me at eden.aristo@gmail.com
-###
+###  
 ####################################################################################################################################################
 ####################################################################################################################################################
 
@@ -34,20 +34,18 @@ import re
 import zipfile
 from pathlib import Path
 import shutil
+import sys
 
 #===================================================================================================================================================
 # GLOBAL VARIABLES
 #===================================================================================================================================================
-INPUT_TOKOPEDIA_STOK_PATH = "INPUT/TOKOPEDIA_STOK"
-INPUT_TOKOPEDIA_PROMO_PATH = "INPUT/TOKOPEDIA_PROMO"
+INPUT_TOKOPEDIA_PATH = "INPUT/TOKOPEDIA_PENJUALAN"
 
 INPUT_AVO_PROMO_PATH = "INPUT/AVO_PROMO"
 INPUT_AVO_MASTER_PATH = "INPUT/AVO_MASTER"
 
 SETTINGS_FEE_PATH = "SETTINGS/fee.xlsx"
 SETTINGS_CONSTANT_PATH = "SETTINGS/constant.xlsx"
-
-MAX_ENTRIES = 499
 
 LOG_OUTPUT_FILE_NAME = 'tokopedia_logfile'
 LOG_PATH = 'LOGS'
@@ -58,8 +56,7 @@ OUTPUT_PATH = 'OUTPUT'
 OUTPUT_DELETION = True
 INPUT_DELETION = False
 
-SHEET_NAME = 'Ubah-Stok Lokasi Harga-Shop Adm'
-TEMPLATE_SUBJECT = "EDT_PRICE_SHOP_ADMIN_HASH_7E998F126A0CD785FA34_FLT_ALL_T_9B774CD2BE82D1E3ACC1_2"
+SHEET_NAME = 'Template'
 
 
 #===================================================================================================================================================
@@ -93,6 +90,7 @@ constants_df = pd.read_excel(SETTINGS_CONSTANT_PATH, header=None, engine='openpy
 STOCK_DIVISOR = constants_df.loc[constants_df[0] == "STOCK_DIVISOR", 1].values[0]
 FREE_ONGKIR_FEE = constants_df.loc[constants_df[0] == "FREE_ONGKIR_FEE", 1].values[0]
 MARKUP = constants_df.loc[constants_df[0] == "MARKUP", 1].values[0]
+
 
 #===================================================================================================================================================
 # AVO MASTER DATA INPUTTING
@@ -162,98 +160,31 @@ avo_df = avo_df.merge(filtered_promo_df[['SKU', 'Price Akhir']], on='SKU', how='
 # Rename the column
 avo_df.rename(columns={'Price Akhir': 'Discount Price'}, inplace=True)
 
-#===================================================================================================================================================
-# TOKOPEDIA STOK DATA INPUTTING
-#===================================================================================================================================================
-# Get list of zip files
-zip_files = [f for f in os.listdir(INPUT_TOKOPEDIA_STOK_PATH) if f.endswith('.zip')]
-
-# Ensure one zip file
-if len(zip_files) != 1:
-    raise SystemExit("TOKOPEDIA_STOK -> Error: There must be exactly 1 ZIP file in the folder.")
-
-# Get the zip file path
-zip_path = os.path.join(INPUT_TOKOPEDIA_STOK_PATH, zip_files[0])
-
-# Extract zip files
-extract_path = os.path.join(INPUT_TOKOPEDIA_STOK_PATH, "extracted_files")
-with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-    zip_ref.extractall(extract_path)
-    
-# Get the first folder inside the zip
-extracted_folders = [f for f in os.listdir(extract_path) if os.path.isdir(os.path.join(extract_path, f))]
-excel_folder_path = os.path.join(extract_path, extracted_folders[0])  # Assume only one folder
-
-# Dataframe list to store all dataframes
-dataframes = []
-
-# Initialize output file
-toped_output_df = pd.DataFrame()
-
-# Read all excel files in the folder
-for file in os.listdir(excel_folder_path):
-    file_path = os.path.join(excel_folder_path, file)
-    if os.path.isfile(file_path) and (file.endswith('.xls') or file.endswith('.xlsx')):
-        df = pd.read_excel(file_path, header=0, skiprows=[0,2], engine='openpyxl', dtype={"Product ID":str, "Harga (Rp)*": float})
-        toped_output_df = pd.read_excel(file_path, header=None, engine='openpyxl')
-        dataframes.append(df)
-        
-# Ensure there are Excel files found
-if not dataframes:
-    raise ValueError("TOKOPEDIA_STOK -> Error: No Excel files found in the folder.")
-
-# Combine Dataframes
-toped_stok_df = pd.concat(dataframes, ignore_index=True)
-
-toped_stok_df = toped_stok_df[toped_stok_df["Lokasi"] == "Maxi Karang Jati"]
-
 
 #===================================================================================================================================================
-# TOKOPEDIA PROMO DATA INPUTTING
+# TOKOPEDIA DATA INPUTTING
 #===================================================================================================================================================
-# Get list of zip files
-zip_files = [f for f in os.listdir(INPUT_TOKOPEDIA_PROMO_PATH) if f.endswith('.zip')]
 
-# Ensure one zip file
-if len(zip_files) != 1:
-    raise SystemExit("TOKOPEDIA_PROMO -> Error: There must be exactly 1 ZIP file in the folder.")
+# List all files in the folder
+files = os.listdir(INPUT_TOKOPEDIA_PATH)
 
-# Get the zip file path
-zip_path = os.path.join(INPUT_TOKOPEDIA_PROMO_PATH, zip_files[0])
+# Filter for .xlsx files
+input_tokopedia_files = [f for f in files if f.endswith('.xlsx')]
 
-# Extract zip files
-extract_path = os.path.join(INPUT_TOKOPEDIA_PROMO_PATH, "extracted_files")
-with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-    zip_ref.extractall(extract_path)
-    
-# Get the first folder inside the zip
-extracted_folders = [f for f in os.listdir(extract_path) if os.path.isdir(os.path.join(extract_path, f))]
-excel_folder_path = os.path.join(extract_path, extracted_folders[0])  # Assume only one folder
+# Check if there is exactly 1 XLSX file
+tokopedia_input_file_path = ''
 
-# Dataframe list to store all dataframes
-dataframes = []
+if len(input_tokopedia_files) == 1:
+    tokopedia_input_file_path = os.path.join(INPUT_TOKOPEDIA_PATH, input_tokopedia_files[0])
+    toped_df = pd.read_excel(tokopedia_input_file_path, header=0, skiprows=[1, 2, 3, 4], engine='openpyxl', dtype={"product_id":str, "price": float, "seller_sku": str, "warehouse_quantity/7394644748202247937": int, "sku_id":str})
+    toped_output_df = pd.read_excel(tokopedia_input_file_path, engine='openpyxl', header=None)
 
-# Read all excel files in the folder
-for file in os.listdir(excel_folder_path):
-    file_path = os.path.join(excel_folder_path, file)
-    if os.path.isfile(file_path) and (file.endswith('.xls') or file.endswith('.xlsx')):
-        df = pd.read_excel(file_path, header=0, skiprows=[0,2], engine='openpyxl', dtype={"ID Produk":str, "Nama SKU": str})
-        dataframes.append(df)
-        
-# Ensure there are Excel files found
-if not dataframes:
-    raise ValueError("TOKOPEDIA_PROMO -> Error: No Excel files found in the folder.")
-
-# Combine Dataframes
-toped_promo_df = pd.concat(dataframes, ignore_index=True)
-
-avo_df.rename(columns={'Price Akhir': 'Discount Price'}, inplace=True)
-toped_promo_df.rename(columns={'Nama SKU': 'SKU', "ID Produk":'Product ID'}, inplace=True)
+else:
+    raise SystemExit("TOKOPEDIA_PENJUALAN-> Error: There must be exactly 1 XLSX file in the folder.")
 
 
+toped_df.rename(columns={'seller_sku': 'SKU', "product_id":'Product ID', 'price':'Price', "warehouse_quantity/7394644748202247937": "Stock", "product_name":"Nama Produk"}, inplace=True)
 
-# Put SKU in toped_stok_df
-toped_stok_df = toped_stok_df.merge(toped_promo_df[["Product ID", "SKU"]], on="Product ID", how="left")
 
 
 
@@ -266,57 +197,47 @@ HIGHEST_FEE = settings_fee_df["fee"].max()
 settings_fee_df.drop_duplicates(subset="SKU", keep='first', inplace=True)
 
 #Help fee merge by making a merge key
-toped_stok_df['merge_key'] = toped_stok_df['SKU'].str.extract(r'(\d+)(?:x\d+)?')[0]
+toped_df['merge_key'] = toped_df['SKU'].str.extract(r'(\d+)(?:x\d+)?')[0]
 settings_fee_df['merge_key'] = settings_fee_df['SKU'].str.extract(r'(\d+)(?:x\d+)?')[0]
 
-# put fee into toped_stok_df
-toped_stok_df = toped_stok_df.merge(settings_fee_df[['merge_key', "fee"]], on='merge_key', how='left')
+# put fee into toped_df
+toped_df = toped_df.merge(settings_fee_df[['merge_key', "fee"]], on='merge_key', how='left')
 
 # drop the merge key
-toped_stok_df.drop(columns=['merge_key'], inplace=True)
-
-
-
-# Rename the Price and Stock columns
-toped_stok_df.rename(columns={'Harga (Rp)*': 'Price', 'Stok Utama*': 'Stock'}, inplace=True)
-
-# Reorder the columns on toped_stok_df for cleaner look
-cols = list(toped_stok_df.columns)
-cols.insert(1, cols.pop(cols.index('SKU')))
-toped_stok_df = toped_stok_df[cols]
+toped_df.drop(columns=['merge_key'], inplace=True)
 
 
 #===================================================================================================================================================
 # MAIN DATA PROCESSING
 #===================================================================================================================================================
-bad_sku_df = pd.DataFrame(columns=toped_stok_df.columns)  # Rows where SKU exists in tokopedia but not in AVO
-no_sku_df = pd.DataFrame(columns=toped_stok_df.columns)  # Rows where SKU is missing in tokopedia
-format_sku_df = pd.DataFrame(columns=toped_stok_df.columns)  # Rows where SKU has a format error
-duplicate_sku_df = pd.DataFrame(columns=toped_stok_df.columns)  # Rows where SKU is duplicated
+bad_sku_df = pd.DataFrame(columns=toped_df.columns)  # Rows where SKU exists in tokopedia but not in AVO
+no_sku_df = pd.DataFrame(columns=toped_df.columns)  # Rows where SKU is missing in tokopedia
+format_sku_df = pd.DataFrame(columns=toped_df.columns)  # Rows where SKU has a format error
+duplicate_sku_df = pd.DataFrame(columns=toped_df.columns)  # Rows where SKU is duplicated
 updated_tracker_df = pd.DataFrame(columns=["SKU", "Name", "Price_Change", "Stock_Change"])    # items that has been updated both price and stock
 
-bad_category_df = pd.DataFrame(columns=toped_stok_df.columns)  # Rows where category dont have fee category
+bad_category_df = pd.DataFrame(columns=toped_df.columns)  # Rows where category dont have fee category
 num_stays = 0
 rows_to_remove = []
 
-updated_toped_stok_df = toped_stok_df.copy()
+updated_toped_df = toped_df.copy()
 sku_first_occurence = {} # keep track of first occurence of sku, detect duplicates
 
 # Iterate through each row in Tokopedia
-for index, row in toped_stok_df.iterrows():
+for index, row in toped_df.iterrows():
     
     curr_sku = row["SKU"]
     
     # Check if SKU is missing (NaN or empty)
     if pd.isna(curr_sku) or curr_sku =='':
         no_sku_df = pd.concat([no_sku_df, row.to_frame().T], ignore_index=True) # Append
-        updated_toped_stok_df.at[index, "Stock"] = 0 # Make Stock 0
+        updated_toped_df.at[index, "Stock"] = 0 # Make Stock 0
         continue
     
     # Check if SKU have wrong format
     if not re.match(r'^\d+(x\d+)?$', curr_sku):
         format_sku_df = pd.concat([format_sku_df, row.to_frame().T], ignore_index=True) # Append entire row
-        updated_toped_stok_df.at[index, "Stock"] = 0 # Make Stock 0
+        updated_toped_df.at[index, "Stock"] = 0 # Make Stock 0
         continue
     
     # Check for SKU duplicates
@@ -324,8 +245,8 @@ for index, row in toped_stok_df.iterrows():
         duplicate_sku_df = pd.concat([duplicate_sku_df, row.to_frame().T], ignore_index=True) # Append entire row
         # if duplicate, set to 0 for this and the first occurence
         first_index = sku_first_occurence[curr_sku]
-        updated_toped_stok_df.at[index, "Stock"] = 0 # Make stock 0
-        updated_toped_stok_df.at[first_index, "Stock"] = 0 # Make stock 0
+        updated_toped_df.at[index, "Stock"] = 0 # Make stock 0
+        updated_toped_df.at[first_index, "Stock"] = 0 # Make stock 0
         continue
     else:
         # if not 0, store first occurence
@@ -346,7 +267,7 @@ for index, row in toped_stok_df.iterrows():
     # If SKU is not found in avo_df, add to bad_sku_df
     if matching_row.empty or (not matching_row.empty and matching_row.iloc[0]["TSKU"] == "D"):
         bad_sku_df = pd.concat([bad_sku_df, row.to_frame().T], ignore_index=True) # Append entire row
-        updated_toped_stok_df.at[index, "Stock"] = 0
+        updated_toped_df.at[index, "Stock"] = 0
         continue
     
     # Check for tail price
@@ -401,13 +322,13 @@ for index, row in toped_stok_df.iterrows():
     price_now = float(math.ceil((avo_price * (1 + MARKUP))/ (1 - fee)))
     if toped_price != price_now:
         price_change = f"{toped_price} -> {price_now}" # record price change
-        updated_toped_stok_df.at[index, "Price"] = price_now # update price
+        updated_toped_df.at[index, "Price"] = price_now # update price
         
     # If stock is different, format change
     stock_now = max(avo_stock // STOCK_DIVISOR, 0)
     if toped_stock != stock_now:
         stock_change = f"{toped_stock} -> {stock_now}" # record stock change
-        updated_toped_stok_df.at[index, "Stock"] = stock_now # update stock
+        updated_toped_df.at[index, "Stock"] = stock_now # update stock
         
     if price_change or stock_change:
         updated_tracker_df = pd.concat([
@@ -422,12 +343,6 @@ for index, row in toped_stok_df.iterrows():
         continue
     
     num_stays = num_stays + 1
-    
-    # add this row to the rows to remove
-    rows_to_remove.append(index)
-    
-# Remove rows that are not updated
-updated_toped_stok_df.drop(rows_to_remove, inplace=True)
 
 
 #===================================================================================================================================================
@@ -438,7 +353,7 @@ if OUTPUT_DELETION:
     files = os.listdir(OUTPUT_PATH)
     for f in files:
         os.remove(os.path.join(OUTPUT_PATH, f))
-
+ 
 #===================================================================================================================================================
 # TOKOPEDIA OUTPUTTING
 #===================================================================================================================================================
@@ -446,46 +361,35 @@ if OUTPUT_DELETION:
 timestamp = time.strftime("%d-%m-%Y_%H-%M-%S")
 
 # Make a new excel template dataframe
-toped_output_df = toped_output_df.iloc[:3]
-updated_toped_stok_df = updated_toped_stok_df.drop(columns=['fee', 'SKU'])
+toped_output_df = toped_output_df.iloc[:5]
+updated_toped_df = updated_toped_df.drop(columns=['fee'])
 
-# Split the dataframe into chunks of 500s
-chunks = np.array_split(updated_toped_stok_df, np.ceil(len(updated_toped_stok_df) / MAX_ENTRIES))
 
-for i, chunk in enumerate(chunks):
-    # Combine toped_output_df (first 2 rows) with the current chunk
-    final_output = pd.concat([toped_output_df, pd.DataFrame(chunk.values)], ignore_index=True)
+final_output = pd.concat([toped_output_df, pd.DataFrame(updated_toped_df.values)], ignore_index=True)
 
-    filename = f"{TOKOPEDIA_OUTPUT_FILE_NAME} ({i+1})_{timestamp}.xlsx"
-    
-    # Generate full file path
-    path = os.path.join(OUTPUT_PATH, filename)
+filename = f"{TOKOPEDIA_OUTPUT_FILE_NAME}_{timestamp}.xlsx"
 
-    # Save to Excel
-    final_output.to_excel(path, index=False, header=False)
-    
-    # PROPERTIES CORRECTION FOR TOKOPEDIA TEMPLATE DETECTION
-    
-    # Load the workbook
-    wb = load_workbook(path)
-    
-    # Modify document properties
-    props = wb.properties
-    props.subject = TEMPLATE_SUBJECT
+path = os.path.join(OUTPUT_PATH, filename)
 
-    # Get the only sheet (assuming there's just one sheet)
-    sheet = wb.active
+final_output.to_excel(path, index=False, header=False)
 
-    # Rename the sheet
-    sheet.title = SHEET_NAME
+# Load the workbook
+wb = load_workbook(path)
 
-    # Make the sheet active (just in case Tokopedia expects it)
-    wb.active = 0
+# Get the only sheet (assuming there's just one sheet)
+sheet = wb.active
 
-    # Save the file
-    wb.save(path)
+# Rename the sheet
+sheet.title = SHEET_NAME
 
-    
+# Make the sheet active (just in case Tokopedia expects it)
+wb.active = 0
+
+# Save the file
+wb.save(path)
+
+final_output
+
 
 #===================================================================================================================================================
 # LOG OUTPUTTING
@@ -525,7 +429,7 @@ LOG SUMMARY:
 
 {format_table(updated_tracker_df, "UPDATES TABLE")}
 
-{format_table(updated_toped_stok_df, "FINAL UPDATED TABLE")}
+{format_table(updated_toped_df, "FINAL UPDATED TABLE")}
 
 ================================================================================================================================
 End of log file
@@ -540,18 +444,10 @@ with open(path, "w") as file:
 # INPUT DELETION
 #===================================================================================================================================================
 if INPUT_DELETION:
-    tokopedia_promo_folder = Path(INPUT_TOKOPEDIA_PROMO_PATH)
-    tokopedia_stok_folder = Path(INPUT_TOKOPEDIA_STOK_PATH)
+    tokopedia_folder = Path(INPUT_TOKOPEDIA_PATH)
     
     # Delete inside of promo
-    for item in tokopedia_promo_folder.iterdir():
-        if item.is_file() or item.is_symlink():
-            item.unlink()  # Delete file or symlink
-        elif item.is_dir():
-            shutil.rmtree(item)  # Delete directory
-    
-    # Delete inside of stok
-    for item in tokopedia_promo_folder.iterdir():
+    for item in tokopedia_folder.iterdir():
         if item.is_file() or item.is_symlink():
             item.unlink()  # Delete file or symlink
         elif item.is_dir():
