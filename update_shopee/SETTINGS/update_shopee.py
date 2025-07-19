@@ -131,7 +131,7 @@ input_shopee_penjualan_files = [f for f in files if f.endswith('.xlsx')]
 shopee_input_penjualan_file_path = ''
 if len(input_shopee_penjualan_files) == 1:
     shopee_input_penjualan_file_path = os.path.join(INPUT_SHOPEE_PENJUALAN_PATH, input_shopee_penjualan_files[0])
-    shopee_df = pd.read_excel(shopee_input_penjualan_file_path, header=0, skiprows=[0, 1, 3, 4, 5], engine='openpyxl', dtype={"SKU": str, "Stok": int, "Harga": float, "SKU Induk": str})
+    shopee_df = pd.read_excel(shopee_input_penjualan_file_path, header=0, skiprows=[0, 1, 3, 4, 5], engine='openpyxl', dtype={"SKU": str, "Stok": int, "Harga": float, "SKU Induk": str, "GTIN": str})
     shopee_output_df = pd.read_excel(shopee_input_penjualan_file_path, engine='openpyxl', header=None)
 
 else:
@@ -387,7 +387,7 @@ for index, row in shopee_df.iterrows():
 # Make a new excel template dataframe, ready to be put into file
 offset = 6
 shopee_output_df.loc[offset:offset+len(updated_shopee_df)-1, 6] = updated_shopee_df['Price'].values
-shopee_output_df.loc[offset:offset+len(updated_shopee_df)-1, 7] = updated_shopee_df['Stock'].values
+shopee_output_df.loc[offset:offset+len(updated_shopee_df)-1, 8] = updated_shopee_df['Stock'].values
 
 
 # Make a new excel file, output
