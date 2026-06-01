@@ -47,3 +47,40 @@ update_tokopedia/SETTINGS/*
 !update_tokopedia/SETTINGS/update_tokopedia.py
 
 update_tokopedia/update_tokopedia.exe
+
+# Ignore all files in Grab but keep the folder
+update_grab/INPUT/AVO_MASTER/*
+!update_grab/INPUT/AVO_MASTER/.gitkeep
+
+update_grab/INPUT/AVO_PROMO/*
+!update_grab/INPUT/AVO_PROMO/.gitkeep
+
+update_grab/INPUT/GRAB_PRICE/*
+!update_grab/INPUT/GRAB_PRICE/.gitkeep
+
+update_grab/INPUT/GRAB_STOCK/*
+!update_grab/INPUT/GRAB_STOCK/.gitkeep
+
+update_grab/LOGS/*
+!update_grab/LOGS/.gitkeep
+
+update_grab/OUTPUT/*
+!update_grab/OUTPUT/.gitkeep
+
+update_grab/SETTINGS/*
+!update_grab/SETTINGS/.gitkeep
+!update_grab/SETTINGS/update_grab.py
+
+update_grab/update_grab.exe
+
+# Python venv for running the original reference scripts
+.venv/
+__pycache__/
+
+# Web app (Node / Next.js) build & dependency artifacts
+node_modules/
+.next/
+out/
+.vercel
+*.local
+.env*.local
